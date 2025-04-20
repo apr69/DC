@@ -1,0 +1,48 @@
+import csv
+
+with open("weather.csv", "r") as file:
+    reader = csv.reader(file)
+    data = list(reader)
+
+for row in data[:5]:
+    print(row)
+['date', 'precipitation', 'temp_max', 'temp_min', 'wind', 'weather']
+['2012-01-01', '0.0', '12.8', '5.0', '4.7', 'drizzle']
+['2012-01-02', '10.9', '10.6', '2.8', '4.5', 'rain']
+['2012-01-03', '0.8', '11.7', '7.2', '2.3', 'rain']
+['2012-01-04', '20.3', '12.2', '5.6', '4.7', 'rain']
+
+mapped_data = []
+for row in data:
+    try:
+        date = row[0]
+        temp_max = float(row[2])
+        temp_min = float(row[3])
+        year = date.split("-")[0]
+        avg_temp = (temp_max + temp_min) / 2
+        mapped_data.append((year, avg_temp))
+    except:
+        continue  # skip invalid rows
+
+
+from collections import defaultdict
+shuffled_data = defaultdict(list)
+for year, temp in mapped_data:
+    shuffled_data[year].append(temp)
+
+
+reduced_data = {}
+for year, temps in shuffled_data.items():
+    avg_year_temp = sum(temps) / len(temps)
+    reduced_data[year] = avg_year_temp
+
+
+coolest_year = min(reduced_data, key=reduced_data.get)
+hottest_year = max(reduced_data, key=reduced_data.get)
+
+print("Average Temperatures by Year:")
+for year in sorted(reduced_data):
+    print(f"{year}: {reduced_data[year]:.2f}°C")
+
+print(f"\nCoolest Year: {coolest_year} with {reduced_data[coolest_year]:.2f}°C")
+print(f"Hottest Year: {hottest_year} with {reduced_data[hottest_year]:.2f}°C")
