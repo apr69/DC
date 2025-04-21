@@ -1,13 +1,4 @@
-"""Name - Ashish.P.Ransing
-   Roll no - 42557
-   Batch - B4
-   Practical_2 - Design a distributed application using RMI for remote computation where client submits two strings to
-                 the server and server returns the concatenation of the given strings."""
-
-
-
 import Pyro4
-
 
 class StringConcatenator:
     @Pyro4.expose
