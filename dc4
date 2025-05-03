@@ -1,0 +1,110 @@
+#HotelInterface
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+import java.util.Map;
+
+public interface HotelInterface extends Remote {
+    String bookRoom(String guestName) throws RemoteException;
+    String cancelBooking(String guestName) throws RemoteException;
+    Map<String, String> getAllBookings() throws RemoteException;
+}
+
+
+
+#HotelServer
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.HashMap;
+import java.util.Map;
+
+public class HotelServer extends UnicastRemoteObject implements HotelInterface {
+    private final Map<String, String> bookings;
+
+    protected HotelServer() throws RemoteException {
+        bookings = new HashMap<>();
+    }
+
+    @Override
+    public synchronized String bookRoom(String guestName) {
+        if (bookings.containsKey(guestName)) {
+            return "Guest '" + guestName + "' already has a room booked.";
+        }
+        bookings.put(guestName, "Room " + (bookings.size() + 1));
+        return "Room booked for " + guestName;
+    }
+
+    @Override
+    public synchronized String cancelBooking(String guestName) {
+        if (bookings.remove(guestName) != null) {
+            return "Booking cancelled for " + guestName;
+        }
+        return "No booking found for " + guestName;
+    }
+
+    @Override
+    public Map<String, String> getAllBookings() {
+        return bookings;
+    }
+
+    public static void main(String[] args) {
+        try {
+            Naming.rebind("HotelService", new HotelServer());
+            System.out.println("Hotel Booking Server is running...");
+        } catch (MalformedURLException | RemoteException e) {
+            System.out.println("Server Exception: " + e);
+        }
+    }
+}
+
+
+
+#HotelClient
+import java.rmi.Naming;
+import java.util.Map;
+import java.util.Scanner;
+
+public class HotelClient {
+    public static void main(String[] args) {
+        try (Scanner scanner = new Scanner(System.in)) {
+            HotelInterface hotel = (HotelInterface) Naming.lookup("rmi://localhost/HotelService");
+            int choice;
+            String guestName;
+
+            do {
+                System.out.println("\n--- Hotel Booking Menu ---");
+                System.out.println("1. Book Room\n2. Cancel Booking\n3. View All Bookings\n4. Exit");
+                System.out.print("Enter choice: ");
+                choice = scanner.nextInt();
+                scanner.nextLine();
+
+                switch (choice) {
+                    case 1 -> {
+                        System.out.print("Enter guest name: ");
+                        guestName = scanner.nextLine();
+                        System.out.println(hotel.bookRoom(guestName));
+                    }
+                    case 2 -> {
+                        System.out.print("Enter guest name: ");
+                        guestName = scanner.nextLine();
+                        System.out.println(hotel.cancelBooking(guestName));
+                    }
+                    case 3 -> {
+                        Map<String, String> bookings = hotel.getAllBookings();
+                        if (bookings.isEmpty()) {
+                            System.out.println("No bookings found.");
+                        } else {
+                            bookings.forEach((name, room) -> System.out.println(name + " -> " + room));
+                        }
+                    }
+                    case 4 -> System.out.println("Exiting...");
+                    default -> System.out.println("Invalid choice. Try again.");
+                }
+            } while (choice != 4);
+        } catch (Exception e) {
+            System.out.println("Client Exception: " + e);
+        }
+    }
+}
+
